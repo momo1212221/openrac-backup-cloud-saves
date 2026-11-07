@@ -4,12 +4,12 @@ import {ModController} from '../src/controller.js';
 const mod=new ModController(service),content=document.querySelector('#content'),message=document.querySelector('#message'),enabled=document.querySelector('#enabled');
 let running=false;
 const el=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
-async function perform(fn){if(running)return;running=true;message.textContent='Working…';try{const result=await fn();message.textContent=result?.message||'Done.';}catch(e){message.textContent=e.message;}finally{running=false;await refresh();}}
+async function perform(fn){if(running)return;running=true;document.querySelectorAll('button,input,select').forEach(e=>e.disabled=true);message.textContent='Working…';try{const result=await fn();message.textContent=result?.message||'Done.';}catch(e){message.textContent=e.message;}finally{running=false;await refresh();}}
 function button(parent,text,op,value=null,disabled=false){const b=el('button',text);b.disabled=disabled;b.onclick=()=>perform(()=>mod.action(op,value));parent.append(b);}
 function section(title,text){const s=el('section');s.append(el('h2',title),el('p',text));content.append(s);return s;}
 function render(s){enabled.checked=s.enabled;enabled.disabled=running;content.replaceChildren();const off=!s.enabled||running;
  const local=section('Local save backups',`${s.saves.serial} · ${s.saves.slots.length} save slots · ${s.saves.backups.length} backups`);
- const note=el('input');note.placeholder='Backup note (optional)';note.maxLength=160;note.setAttribute('aria-label','Backup note');local.append(note);
+ const note=el('input');note.placeholder='Backup note (optional)';note.maxLength=160;note.disabled=off;note.setAttribute('aria-label','Backup note');local.append(note);
  const create=el('button','Create backup');create.disabled=off;create.onclick=()=>perform(()=>mod.action('backup.create',{note:note.value}));local.append(create);
  for(const backup of s.saves.backups){const row=el('div');row.append(el('span',`${backup.note||backup.name} · ${Math.round(backup.totalSize/1024)} KB `));button(row,'Restore…','backup.restore',{name:backup.name},off);local.append(row);}
  const cloud=section('Cloud folder sync',s.config.folder||'No folder selected. Choose a folder already synchronized by your cloud app, Syncthing or NAS. This mod does not sign into a provider or enable iCloud.');
